@@ -3,281 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartLogistics Pro | Control Center</title>
+    <title>Logistics AI | Hub Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-       .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        @keyframes pulse-green { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-       .live-indicator { animation: pulse-green 2s infinite; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .tab-active { border-bottom: 4px solid #4f46e5; color: #4f46e5; }
+        #reader { border-radius: 1.5rem; overflow: hidden; border: none!important; }
+        #reader__dashboard_section_csr button { background: #4f46e5!important; color: white!important; border-radius: 0.5rem!important; padding: 0.5rem 1rem!important; font-weight: bold!important; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-900">
+<body class="min-h-screen">
 
-    <nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-lg">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-600 p-2 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                </div>
-                <h1 class="text-xl font-bold tracking-tight">SmartLogistics <span class="text-blue-400 font-medium">Pro</span></h1>
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold italic shadow-lg shadow-indigo-200">L</div>
+                <span class="font-extrabold text-xl tracking-tight text-slate-800 uppercase">Logistics AI Hub</span>
             </div>
-            <div class="hidden md:flex items-center gap-4 text-xs font-bold uppercase tracking-wider opacity-70">
-                <span class="flex items-center gap-1"><span class="w-2 h-2 bg-emerald-500 rounded-full live-indicator"></span> PLC System Online</span>
-                <span class="border-l border-slate-700 pl-4">SCADA Traceability Active</span>
+            <div class="flex gap-8 h-full">
+                <button onclick="toggle('gen')" id="b-gen" class="tab-active font-bold px-2 flex items-center h-full transition-all">1. GENERATE LABEL</button>
+                <button onclick="toggle('scan')" id="b-scan" class="font-bold px-2 flex items-center h-full text-slate-400 transition-all">2. SCAN & INVOICE</button>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <main class="max-w-6xl mx-auto p-4 md:p-8">
         
-        <div class="lg:col-span-4 space-y-6">
-            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
-                    Parcel Labeling Unit
-                </h2>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Customer Name</label>
-                        <input type="text" id="cust" placeholder="e.g. John Doe" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 transition-all text-sm">
+        <!-- Generator Section -->
+        <section id="s-gen" class="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in duration-500">
+            <div class="lg:col-span-7 bg-white p-8 rounded-[2rem] shadow-xl shadow-indigo-500/5 border border-slate-100">
+                <h2 class="text-2xl font-bold mb-6 text-slate-800">Dispatch Entry Form</h2>
+                <form id="qrForm" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Customer Name</label>
+                            <input type="text" id="cust" placeholder="e.g. Rushikesh Kokate" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Seller Name</label>
+                            <input type="text" id="sell" placeholder="e.g. Shreyash Retail Pvt Ltd" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                        </div>
                     </div>
-
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Full Delivery Address</label>
-                        <textarea id="addr" rows="2" placeholder="Street, Town Hub..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 transition-all text-sm resize-none"></textarea>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Delivery Address</label>
+                        <textarea id="addr" rows="2" required placeholder="Full street, city, landmark..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none"></textarea>
                     </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Target Hub</label>
-                            <select id="hub" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-semibold text-blue-600 appearance-none">
-                                <option value="Zone X">Town Hub X</option>
-                                <option value="Zone Y">Zone Y</option>
-                                <option value="Rejected">Rejected</option>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Sorting Hub (Zone)</label>
+                            <select id="hub" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-indigo-600 appearance-none">
+                                <option value="Baramati">Baramati Hub</option>
+                                <option value="Pune">Pune Hub</option>
+                                <option value="Indapur">Indapur Hub</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Item Price ($)</label>
-                            <input type="number" id="price" placeholder="0.00" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 text-sm">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Price (₹)</label>
+                            <input type="number" id="price" placeholder="0.00" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
                         </div>
                     </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Weight (kg)</label>
-                            <input type="number" id="weight" step="0.1" placeholder="1.0" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 text-sm">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Weight (kg)</label>
+                            <input type="number" step="0.1" id="wt" placeholder="0.5" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Payment Method</label>
-                            <select id="pay" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm appearance-none">
-                                <option value="Prepaid">Prepaid</option>
-                                <option value="COD">COD</option>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Product Category</label>
+                            <select id="type" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                                <option value="Electronics & Appliances">Electronics & Appliances</option>
+                                <option value="Fashion">Fashion</option>
+                                <option value="Home & Furniture">Home & Furniture</option>
+                                <option value="Grocery & Essentials">Grocery & Essentials</option>
+                                <option value="Beauty & Personal Care">Beauty & Personal Care</option>
+                                <option value="Books & Stationery">Books & Stationery</option>
+                                <option value="Sports, Toys & Baby Products">Sports, Toys & Baby Products</option>
+                                <option value="Musical Instruments">Musical Instruments</option>
+                                <option value="Pharmaceutical">Pharmaceutical</option>
                             </select>
                         </div>
                     </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Payment Method</label>
+                        <select id="pay" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                            <option value="Prepaid">Prepaid</option>
+                            <option value="Cash on Delivery">Cash on Delivery (COD)</option>
+                            <option value="Online">UPI / Online</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-extrabold py-5 rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 active:scale-[0.98] transition-all mt-4 uppercase">
+                        Generate Logistic Label
+                    </button>
+                </form>
+            </div>
 
-                    <button onclick="processDispatch()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 active:scale-95 transition-all mt-2">
-                        Generate QR & Dispatch
+            <div id="qr-result" class="lg:col-span-5 flex flex-col items-center justify-center space-y-6">
+                <div id="preview-card" class="hidden bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col items-center animate-in zoom-in duration-300">
+                    <div id="qrcode" class="p-4 bg-white rounded-3xl border-4 border-slate-900 shadow-inner mb-4"></div>
+                    <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest text-center">Industrial Scan Ready</p>
+                    <button onclick="dlQR()" class="mt-6 w-full flex items-center justify-center gap-2 bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Download Label
                     </button>
                 </div>
+                <div id="placeholder" class="w-full aspect-square rounded-[3rem] border-4 border-dashed border-slate-300 flex items-center justify-center text-slate-400 font-bold opacity-50 text-center px-8">
+                    Fill the form to generate a <br>machine-readable barcode label
+                </div>
             </div>
+        </section>
 
-            <div id="qr-result" class="hidden bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center">
-                <div id="qr-container" class="bg-white p-4 border-4 border-slate-900 rounded-2xl mb-4">
-                    </div>
-                <p id="display-id" class="font-mono text-blue-600 font-bold text-sm mb-1"></p>
-                <div class="flex gap-4">
-                    <button onclick="downloadQR()" class="text-xs font-bold text-slate-500 hover:text-blue-600 underline">Download Label</button>
-                </div>
+        <!-- Scanner Section -->
+        <section id="s-scan" class="hidden max-w-2xl mx-auto space-y-8 animate-in slide-in-from-bottom-8 duration-500">
+            <div class="bg-white p-8 rounded-[2rem] shadow-lg border border-slate-100 text-center">
+                <h2 class="text-xl font-bold mb-4 text-slate-800 uppercase tracking-tight">AI Vision Scanner</h2>
+                <div id="reader" class="bg-slate-50 border-2 border-dashed border-slate-200 shadow-inner"></div>
+                <p class="mt-6 text-xs text-slate-400 font-bold uppercase tracking-widest">Automatic Tax Invoice Generation</p>
             </div>
-        </div>
+            
+            <div id="log" class="hidden bg-emerald-500 p-6 rounded-3xl text-white text-center font-bold text-lg shadow-xl shadow-emerald-100 animate-bounce">
+                ✅ PARCEL IDENTIFIED: GENERATING INVOICE...
+            </div>
+        </section>
 
-        <div class="lg:col-span-8 space-y-6">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">Total Items</p>
-                    <p id="stat-total" class="text-2xl font-bold text-slate-800">0</p>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 shadow-sm text-blue-900">
-                    <p class="text-[10px] font-bold opacity-60 uppercase">Town Hub X</p>
-                    <p id="stat-hub-x" class="text-2xl font-bold">0</p>
-                </div>
-                <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 shadow-sm text-emerald-900">
-                    <p class="text-[10px] font-bold opacity-60 uppercase">Success Rate</p>
-                    <p class="text-2xl font-bold">100%</p>
-                </div>
-                <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100 shadow-sm text-amber-900">
-                    <p class="text-[10px] font-bold opacity-60 uppercase">Total Value</p>
-                    <p id="stat-value" class="text-2xl font-bold">$0.00</p>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
-                <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                    <h3 class="font-bold text-slate-700">SCADA | Real-Time Dispatch Log</h3>
-                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full uppercase tracking-widest">Live</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
-                            <tr>
-                                <th class="p-4">ID</th>
-                                <th class="p-4">Customer</th>
-                                <th class="p-4">Hub</th>
-                                <th class="p-4">Value</th>
-                                <th class="p-4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dispatch-table" class="text-sm divide-y divide-slate-100">
-                            </tbody>
-                    </table>
-                    <div id="empty-state" class="flex flex-col items-center justify-center p-20 text-slate-400 opacity-60">
-                        <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
-                        <p>No parcels dispatched yet.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
     </main>
 
     <script>
-        let dispatchHistory =;
-        let totalValue = 0;
-        let hubXCount = 0;
+        let scanner;
 
-        function processDispatch() {
-            const cust = document.getElementById('cust').value |
-
-| "Unnamed Customer";
-            const addr = document.getElementById('addr').value |
-
-| "No Address Provided";
-            const hub = document.getElementById('hub').value;
-            const price = parseFloat(document.getElementById('price').value) |
-
-| 0.00;
-            const weight = document.getElementById('weight').value |
-
-| "1.0";
-            const pay = document.getElementById('pay').value;
+        // Corrected Toggle Function
+        function toggle(tab) {
+            const isGen = tab === 'gen';
+            document.getElementById('s-gen').classList.toggle('hidden', !isGen);
+            document.getElementById('s-scan').classList.toggle('hidden', isGen);
             
-            const parcelId = "ID-" + Math.floor(100000 + Math.random() * 900000);
-
-            const parcelData = {
-                id: parcelId,
-                cust: cust,
-                addr: addr,
-                hub: hub,
-                val: price.toFixed(2),
-                wt: weight,
-                pay: pay,
-                timestamp: new Date().toLocaleTimeString()
-            };
-
-            // 1. Generate QR Code
-            const qrString = JSON.stringify(parcelData);
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrString)}&margin=10`;
-            document.getElementById('qr-container').innerHTML = `<img src="${qrUrl}" id="qr-img" class="w-48 h-48">`;
-            document.getElementById('display-id').innerText = parcelId;
-            document.getElementById('qr-result').classList.remove('hidden');
-
-            // 2. Update Log and Stats
-            dispatchHistory.unshift(parcelData);
-            totalValue += price;
-            if(hub === 'Zone X') hubXCount++;
+            // UI Feedback for tabs
+            document.getElementById('b-gen').className = isGen 
+                ? 'tab-active font-bold px-2 flex items-center h-full' 
+                : 'font-bold px-2 flex items-center h-full text-slate-400';
             
-            updateDashboard();
+            document.getElementById('b-scan').className = !isGen 
+                ? 'tab-active font-bold px-2 flex items-center h-full' 
+                : 'font-bold px-2 flex items-center h-full text-slate-400';
+
+            if (!isGen) {
+                startCam();
+            } else {
+                stopCam();
+            }
         }
 
-        function updateDashboard() {
-            const tbody = document.getElementById('dispatch-table');
-            const empty = document.getElementById('empty-state');
+        const form = document.getElementById('qrForm');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const qrDiv = document.getElementById('qrcode');
+            qrDiv.innerHTML = "";
             
-            empty.style.display = dispatchHistory.length > 0? 'none' : 'flex';
+            // Data Structure: Cust|Sell|Addr|Hub|Category|Weight|PayMethod|Price
+            const fields = [
+                document.getElementById('cust').value,
+                document.getElementById('sell').value,
+                document.getElementById('addr').value.replace(/\|/g, ' '), // Remove pipes from address
+                document.getElementById('hub').value,
+                document.getElementById('type').value,
+                document.getElementById('wt').value,
+                document.getElementById('pay').value,
+                document.getElementById('price').value
+            ];
+            const dataStr = fields.join('|');
+
+            new QRCode(qrDiv, { 
+                text: dataStr, 
+                width: 220, 
+                height: 220, 
+                correctLevel: QRCode.CorrectLevel.H 
+            });
             
-            tbody.innerHTML = dispatchHistory.map((p, index) => `
-                <tr class="hover:bg-slate-50 transition-colors animate-in fade-in slide-in-from-top-4">
-                    <td class="p-4 font-mono font-bold text-blue-600">${p.id}</td>
-                    <td class="p-4 font-semibold">${p.cust}</td>
-                    <td class="p-4"><span class="px-2 py-1 ${p.hub === 'Zone X'? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'} rounded-lg text-[10px] font-bold uppercase">${p.hub}</span></td>
-                    <td class="p-4 font-bold text-slate-700">$${p.val}</td>
-                    <td class="p-4">
-                        <button onclick="downloadInvoice(${index})" class="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-black transition-all">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                            Invoice
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+            document.getElementById('preview-card').classList.remove('hidden');
+            document.getElementById('placeholder').classList.add('hidden');
+        });
 
-            document.getElementById('stat-total').innerText = dispatchHistory.length;
-            document.getElementById('stat-hub-x').innerText = hubXCount;
-            document.getElementById('stat-value').innerText = `$${totalValue.toFixed(2)}`;
-        }
-
-        function downloadQR() {
-            const img = document.getElementById('qr-img');
+        function dlQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            if (!canvas) return;
             const link = document.createElement('a');
-            link.href = img.src;
-            link.download = `Label-${document.getElementById('display-id').innerText}.png`;
+            link.download = `Parcel_Label_${Date.now()}.png`;
+            link.href = canvas.toDataURL();
             link.click();
         }
 
-        function downloadInvoice(index) {
-            const data = dispatchHistory[index];
+        function startCam() {
+            scanner = new Html5Qrcode("reader");
+            scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (txt) => {
+                if (navigator.vibrate) navigator.vibrate(100);
+                document.getElementById('log').classList.remove('hidden');
+                makeInvoice(txt);
+                setTimeout(() => document.getElementById('log').classList.add('hidden'), 3000);
+            }).catch(e => console.warn("Camera Init Error:", e));
+        }
+
+        function stopCam() { 
+            if (scanner && scanner.isScanning) {
+                scanner.stop().then(() => scanner.clear()).catch(e => console.warn(e));
+            }
+        }
+
+        function makeInvoice(raw) {
+            const f = raw.split('|');
+            if (f.length < 8) return;
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            // Invoice Styling & Content
-            doc.setFillColor(30, 41, 59); // Slate-900
-            doc.rect(0, 0, 210, 40, 'F');
-            
-            doc.setTextColor(255, 255, 255);
+            const margin = 15;
             doc.setFontSize(22);
-            doc.text("SMARTLOGISTICS PRO", 15, 20);
-            doc.setFontSize(10);
-            doc.text("Automated Fulfillment Hub | Unit 01", 15, 30);
-
-            doc.setTextColor(30, 41, 59);
-            doc.setFontSize(16);
-            doc.text("SHIPPING INVOICE", 15, 60);
+            doc.setFont('helvetica', 'bold');
+            doc.text("Tax Invoice", margin, 25);
             
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100);
+            doc.text(`Invoice Number: INV-${Date.now()}`, margin, 35);
+            doc.text(`Order Number: ORD-${Math.floor(Math.random()*1000000000)}`, margin, 40);
+            doc.text(`Place of Supply: MAHARASHTRA`, margin, 45);
+
+            doc.setTextColor(0);
             doc.setFontSize(10);
-            doc.text(`Invoice ID: ${data.id}`, 15, 70);
-            doc.text(`Dispatch Date: ${new Date().toLocaleDateString()}`, 15, 75);
+            doc.setFont('helvetica', 'bold');
+            doc.text("Bill to / Ship to:", margin, 60);
+            doc.text("Bill From:", 110, 60);
 
-            doc.setFont("helvetica", "bold");
-            doc.text("BILL TO:", 15, 95);
-            doc.setFont("helvetica", "normal");
-            doc.text(data.cust, 15, 100);
-            doc.text(data.addr, 15, 105);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text(f[0], margin, 66); // Customer
+            const addrLines = doc.splitTextToSize(f[2], 80);
+            doc.text(addrLines, margin, 71); // Address
 
-            // Item Table
+            doc.text(f[1], 110, 66); // Seller
+            doc.text("Ksquare Industrial Park, Unit-4,", 110, 71);
+            doc.text("Nashik-Mumbai Highway, THANE-421101", 110, 76);
+
+            const price = parseFloat(f[7]) || 0;
+            const taxableAmt = (price / 1.18).toFixed(2);
+            const igst = (price - taxableAmt).toFixed(2);
+
             doc.autoTable({
-                startY: 120,
-                head:],
-                body:`, data.hub, `${data.wt} kg`, `$${data.val}`],
-                theme: 'striped',
-                headStyles: { fillColor:  }
+                startY: 95,
+                head: [['Description', 'Qty', 'Unit Price', 'Taxable Amt', 'IGST (18%)', 'Total']],
+                body: [[
+                    `${f[4]} \nCategory: ${f[4]} \nWeight: ${f[5]}kg`,
+                    '1',
+                    `Rs ${taxableAmt}`,
+                    `Rs ${taxableAmt}`,
+                    `Rs ${igst}`,
+                    `Rs ${price.toFixed(2)}`
+                ]],
+                theme: 'grid',
+                headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255] },
+                styles: { fontSize: 8 }
             });
 
             const finalY = doc.lastAutoTable.finalY;
-            doc.setFontSize(14);
-            doc.setFont("helvetica", "bold");
-            doc.text(`TOTAL AMOUNT: $${data.val}`, 140, finalY + 20);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`TOTAL AMOUNT: Rs ${price.toFixed(2)}`, 195, finalY + 15, { align: 'right' });
 
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "italic");
-            doc.text("Thank you for choosing our automated sorting service.", 105, 280, { align: "center" });
+            // Industrial Footer logic for PLC routing
+            doc.setFillColor(245, 247, 250);
+            doc.rect(margin, finalY + 30, 180, 25, 'F');
+            doc.setFontSize(8);
+            doc.setTextColor(79, 70, 229);
+            doc.text("INDUSTRIAL ROUTING TELEMETRY (PLC PACKET DATA)", margin + 5, finalY + 40);
+            doc.setTextColor(0);
+            doc.text(`DESTINATION HUB: ${f[3].toUpperCase()}`, margin + 5, finalY + 47);
+            
+            // Simulated PLC response based on scanned zone
+            let action = "DIRECT FLOW";
+            if (f[3] === 'Baramati') action = "PNEUMATIC ACTUATOR 1";
+            else if (f[3] === 'Indapur') action = "PNEUMATIC ACTUATOR 2";
+            
+            doc.text(`PLC MECHANICAL ACTION: ${action}`, margin + 90, finalY + 47);
 
-            doc.save(`Invoice_${data.id}.pdf`);
+            doc.save(`Invoice_${f[0].replace(/\s+/g, '_')}.pdf`);
         }
     </script>
 </body>
